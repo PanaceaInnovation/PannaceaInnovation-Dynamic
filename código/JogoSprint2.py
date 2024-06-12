@@ -25,11 +25,9 @@ foodCounter = 0
 NEWFOOD = 40
 FOODSIZE = 20
 
-# Carregar a imagem do jogador
-playerImage = pygame.image.load('img/170.png')  # Certifique-se de que a imagem está no mesmo diretório ou forneça o caminho completo
-playerImage = pygame.transform.scale(playerImage, (50, 50))  # Redimensionar a imagem se necessário
-playerRect = playerImage.get_rect()
-playerRect.topleft = (300, 300)
+# Definição do retângulo do jogador
+player = pygame.Rect(300, 300, 50, 50)
+player_color = BLACK
 
 # Lista que armazenará os retângulos da comida
 foods = [pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE),
@@ -105,42 +103,42 @@ while True:
             if event.key == K_DOWN or event.key == K_s:
                 moveDown = False
             if event.key == K_x:
-                playerRect.top = random.randint(0, WINDOWHEIGHT - playerRect.height)
-                playerRect.left = random.randint(0, WINDOWWIDTH - playerRect.width)
+                player.top = random.randint(0, WINDOWHEIGHT - player.height)
+                player.left = random.randint(0, WINDOWWIDTH - player.width)
         # Eventos de clique do mouse
         if event.type == MOUSEBUTTONUP:
             foods.append(pygame.Rect(event.pos[0], event.pos[1], FOODSIZE, FOODSIZE))
 
     # Movimento do jogador
     if moveDown:
-        playerRect.top += MOVESPEED
+        player.top += MOVESPEED
     if moveUp:
-        playerRect.top -= MOVESPEED
+        player.top -= MOVESPEED
     if moveLeft:
-        playerRect.left -= MOVESPEED
+        player.left -= MOVESPEED
     if moveRight:
-        playerRect.left += MOVESPEED
+        player.right += MOVESPEED
 
     # Implementação do 'wrap around'
-    if playerRect.top < 0:
-        playerRect.top = WINDOWHEIGHT - playerRect.height
-    if playerRect.bottom > WINDOWHEIGHT:
-        playerRect.top = 0
-    if playerRect.left < 0:
-        playerRect.left = WINDOWWIDTH - playerRect.width
-    if playerRect.right > WINDOWWIDTH:
-        playerRect.left = 0
+    if player.top < 0:
+        player.top = WINDOWHEIGHT - player.height
+    if player.bottom > WINDOWHEIGHT:
+        player.top = 0
+    if player.left < 0:
+        player.left = WINDOWWIDTH - player.width
+    if player.right > WINDOWWIDTH:
+        player.left = 0
 
     # Verifica colisão com pedras e desfaz movimento se necessário
-    if check_collision_with_rocks(playerRect, rocks):
+    if check_collision_with_rocks(player, rocks):
         if moveDown:
-            playerRect.top -= MOVESPEED
+            player.top -= MOVESPEED
         if moveUp:
-            playerRect.top += MOVESPEED
+            player.top += MOVESPEED
         if moveLeft:
-            playerRect.left += MOVESPEED
+            player.left += MOVESPEED
         if moveRight:
-            playerRect.left -= MOVESPEED
+            player.right -= MOVESPEED
 
     # Contagem de comida
     foodCounter += 1
@@ -155,16 +153,14 @@ while True:
     windowSurface.fill(WHITE)
 
     # Desenha o jogador
-    windowSurface.blit(playerImage, playerRect)
+    pygame.draw.rect(windowSurface, player_color, player)
 
     # Verifica colisões entre o jogador e a comida e remove a comida se houver colisão
     for food in foods[:]:
-        if playerRect.colliderect(food):
+        if player.colliderect(food):
             foods.remove(food)
             score += 1
-            # Aumenta o tamanho da imagem do jogador
-            playerRect.inflate_ip(5, 5)  # Aumenta o tamanho do retângulo
-            playerImage = pygame.transform.scale(playerImage, (playerRect.width, playerRect.height))
+            player.inflate_ip(5, 5)  # Aumenta o tamanho do jogador
             print(f"Pontuação: {score}")
 
     # Desenha a comida
