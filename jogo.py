@@ -20,7 +20,7 @@ GREEN = (80, 200, 120)  # Verde esmeralda para o jogador
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)       # Vermelho para a comida
 GRAY = (169, 169, 169)  # Cinza para as pedras
-LIGHT_BLUE = (173, 216, 230)  # Azul claro para as comidas
+
 
 # Contador de comida e configurações relacionadas à comida
 foodCounter = 0
@@ -31,7 +31,7 @@ FOODSIZE = 30  # Tamanho da comida
 playerSize = 45  # Tamanho inicial do jogador
 playerRect = pygame.Rect(300, 300, playerSize, playerSize)
 
-# Fonte para o texto dentro do jogador (tamanho reduzido)
+# Fonte para o texto dentro do jogador
 playerFont = pygame.font.SysFont(None, 11)
 
 # Lista que armazenará os retângulos da comida
@@ -39,7 +39,7 @@ foods = [pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE),
                      random.randint(0, WINDOWHEIGHT - FOODSIZE),
                      FOODSIZE, FOODSIZE) for _ in range(20)]
 
-# Lista de 'pedras' (obstáculos) com maior espaçamento e menor largura
+# Lista de 'pedras' 
 rocks = [
     pygame.Rect(50, 50, 100, 20),
     pygame.Rect(250, 150, 20, 140),
@@ -64,10 +64,10 @@ score = 0
 
 # Fonte para exibição de texto na tela
 font = pygame.font.SysFont(None, 36)
-small_font = pygame.font.SysFont(None, 18)  # Fonte menor para o texto adicional
+small_font = pygame.font.SysFont(None, 18)  
 
 # Variável para o tempo limite do jogo (em segundos)
-TIME_LIMIT = 40  # Aumentado para 40 segundos
+TIME_LIMIT = 40  
 start_time = time.time()
 
 # Função para verificar colisão com pedras
@@ -202,7 +202,7 @@ while True:
     score_text_rect = score_text.get_rect(topright=(WINDOWWIDTH - 10, 10))
     windowSurface.blit(score_text, score_text_rect)
 
-    # Exibe o texto adicional
+    # Exibe o texto da meta
     win_condition_text = small_font.render('TENTE FAZER 50 PONTOS PARA VENCER!', True, WHITE)
     win_condition_rect = win_condition_text.get_rect(midtop=(WINDOWWIDTH // 1.8, 40))
     windowSurface.blit(win_condition_text, win_condition_rect)
