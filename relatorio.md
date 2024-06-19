@@ -1,4 +1,4 @@
-<h1>PANACEA INNOVATION</h1>
+# PANACEA INNOVATION
 ![image](https://github.com/PanaceaInnovation/PannaceaInnovation-Dynamic/assets/127115340/5d9e8d40-7d61-4355-b3d3-0cfe1b2b69ec)
 
 
@@ -14,7 +14,7 @@
 
 **OBS: PARA RODAR O JOGO CORRETAMENTE EXECUTE 'pip install -r requirements.txt' NO TERMINAL;**
 
-<h3>DESAFIOS CUMPRIDOS</h3>
+## DESAFIOS CUMPRIDOS
 
 **OBS: TODOS OS DESAFIOS SE ENCONTRAM NO MESMO ARQUIVO "jogo.py";**
 
@@ -47,7 +47,7 @@ Este desafio foi cumprido. O jogador cresce gradualmente, a medida que come as c
 
 Esta funcionalidade foi implementada. O jogador quando sai da tela pelo lado esquerdo e volta pelo direita, e vice e versa. O mesmo acontece para cima e para baixo.
 
-<h3>RESUMO DO FUNCIONAMENTO E OUTRAS IMPLEMENTAÇÕES</h3>
+## RESUMO DO FUNCIONAMENTO E OUTRAS IMPLEMENTAÇÕES
 
   A Panacea Innovation desenvolveu um minigame que contém todos os desafios propostos pelo professor implementados. Além dos desafios implementados, 
 através de pesquisa, foi possível adicionar algumas outras funcionalidades, que deixam o jogo mais interessante e divertido. Adicionamos um tempo limite de 40s, 
