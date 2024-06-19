@@ -46,7 +46,7 @@ Esta funcionalidade foi implementada. O jogador quando sai da tela pelo lado esq
 
 RESUMO DO FUNCIONAMENTO E OUTRAS IMPLEMENTAÇÕES
 
-        A Panacea Innovation desenvolveu um minigame que contém todos os desafios propostos pelo professor implementados. Além dos desafios implementados, 
+  A Panacea Innovation desenvolveu um minigame que contém todos os desafios propostos pelo professor implementados. Além dos desafios implementados, 
 através de pesquisa, foi possível adicionar algumas outras funcionalidades, que deixam o jogo mais interessante e divertido. Adicionamos um tempo limite de 40s, 
 do qual torna o jogo mais desafiador. Este tempo é exibido na tela ao lado da pontuação, e é atualizado conforme os segundos vão passando. Além do tempo limite, 
 definimos uma meta da qual o jogador tem que atingir para poder vencer o jogo. Ela também é exibida ne tela do jogo. Caso ele consiga atingir essa meta dentro do 
