@@ -1,5 +1,6 @@
-import oracledb
-import random  # Importando para gerar o número aleatório
+import oracledb # Importando para tornar possível a conexão com a Oracle
+import random  # Importando para gerar o número aleatório que será atribuído a pontuação
+import pandas as pd # Importando para poder exibir o DataFrame que contém os alunos
 
 # Função para inserir um novo usuário na tabela
 def inserir_usuario(email, apelido, senha, cpf, matricula, autoridade):
@@ -14,11 +15,11 @@ def inserir_usuario(email, apelido, senha, cpf, matricula, autoridade):
         # Criar um cursor
         cursor = connection.cursor()
 
-        # Se o usuário não for autoridade, gerar uma pontuação aleatória entre 0 e 10
+        # Se o usuário não for professor, gerar uma pontuação aleatória entre 0 e 10, apenas para fins de simulação
         if autoridade == 0:
             pontuacao = random.randint(0, 10)
         else:
-            pontuacao = None  # Autoridades não têm pontuação, ou você pode definir outro valor padrão
+            pontuacao = None  # Professores não têm pontuação
 
         # Comando SQL para inserir o usuário
         sql_insert = """
@@ -56,7 +57,7 @@ def cadastro_usuario():
     inserir_usuario(email, apelido, senha, cpf, matricula, autoridade)
 
    
-
+# Função para possibilitar a edição de dados do usuário
 def editar_dados_usuario(dados_usuario):
     print("\n=== Editar Dados ===")
     
@@ -133,7 +134,7 @@ def editar_dados_usuario(dados_usuario):
                 cursor.close()
                 connection.close()
 
-
+# Função que busca o aluno pela matricula para montar a turma
 def buscar_aluno_por_matricula(matricula):
     try:
         # Conectar ao banco de dados
@@ -174,6 +175,50 @@ def buscar_aluno_por_matricula(matricula):
         cursor.close()
         connection.close()
 
+# Função que exibe o DataFrame contendo os alunos cadastrados
+def visualizar_usuarios_nao_autoridade():
+    try:
+        # Conectar ao banco de dados
+        connection = oracledb.connect(
+            user="rm97857",
+            password="060105",
+            dsn="oracle.fiap.com.br:1521/orcl"
+        )
+
+        # Criar um cursor
+        cursor = connection.cursor()
+
+        # Comando SQL para selecionar os usuários que não são autoridade, excluindo a senha
+        sql_select = """
+            SELECT email, apelido, cpf, matricula
+            FROM cadastrop
+            WHERE autoridade = 0
+        """
+        
+        # Executar o comando de seleção
+        cursor.execute(sql_select)
+        
+        # Buscar todos os resultados
+        usuarios = cursor.fetchall()
+
+        # Definir os nomes das colunas (sem a senha)
+        colunas = ['Email', 'Apelido', 'CPF', 'Matrícula']
+
+        # Criar um DataFrame a partir dos dados
+        df = pd.DataFrame(usuarios, columns=colunas)
+
+        # Exibir o DataFrame
+        print("\n=== Alunos cadastrados ===")
+        print(df)
+        
+    except oracledb.DatabaseError as e:
+        print("Erro ao buscar os usuários:", e)
+
+    finally:
+        # Fechar o cursor e a conexão
+        cursor.close()
+        connection.close()
+
 # Função para adicionar alunos à turma
 def montar_turma():
     turma = []
@@ -197,6 +242,7 @@ def montar_turma():
     print("\nTurma montada com sucesso!")
     return turma  # Retornar a lista de alunos da turma
 
+# Função que possibilita um professor cadastrado a ver as notas da turma
 def ver_notas_turma(turma):
     if not turma:
         print("\nA turma está vazia. Nenhum aluno foi adicionado.")
@@ -236,47 +282,73 @@ def ver_notas_turma(turma):
     except oracledb.DatabaseError as e:
         print("Erro ao buscar notas dos alunos:", e)
 
+# Função que simula uma conversa com a nossa IA, chamada Helena
 def helena(dados_usuario):
-    try:
-        # Conectar ao banco de dados
-        connection = oracledb.connect(
-            user="rm97857",
-            password="060105",
-            dsn="oracle.fiap.com.br:1521/orcl"
-        )
+    while True:
+        print("\n=== Chat com a HELENA ===")
+        print("\nOlá! Eu sou a HELENA, sua assistente virtual. Como posso ajudá-lo hoje?\n")
+        print("1. Ver minha nota no teste de Laparoscopia")
+        print("2. O que é o MyTeacher?")
+        print("3. Informações sobre o desenvolvimento do jogo em realidade virtual")
+        print("4. Sair")
 
-        # Criar um cursor
-        cursor = connection.cursor()
+        escolha = input("Escolha uma das opções: ")
 
-        # Comando SQL para buscar a pontuação do aluno pela matrícula
-        sql_select = """
-        SELECT pontuacao FROM cadastrop WHERE matricula = :matricula
-        """
-        
-        # Executar o comando de seleção
-        cursor.execute(sql_select, matricula=dados_usuario['matricula'])
-        
-        # Obter o resultado
-        pontuacao = cursor.fetchone
-        
-        if pontuacao:
-            print(f"Olá! Eu sou a HELENA, sua assistente virtual. Seja bem vindo ao MyTeacher! Sua nota no teste de Laparoscopia é de {pontuacao[0]}. Como posso ajuda-lo hoje?")
+        if escolha == '1':
+            try:
+                # Conectar ao banco de dados para buscar a nota do aluno
+                connection = oracledb.connect(
+                    user="rm97857",
+                    password="060105",
+                    dsn="oracle.fiap.com.br:1521/orcl"
+                )
+                cursor = connection.cursor()
+
+                # Comando SQL para buscar a pontuação do aluno pela matrícula
+                sql_select = """
+                SELECT pontuacao FROM cadastrop WHERE matricula = :matricula
+                """
+                
+                # Executar o comando de seleção
+                cursor.execute(sql_select, matricula=dados_usuario['matricula'])
+                
+                # Obter o resultado
+                pontuacao = cursor.fetchone()
+                
+                if pontuacao:
+                    print(f"Sua nota no teste de Laparoscopia é de {pontuacao[0]}.")
+                else:
+                    print("Sua nota no teste de Laparoscopia não foi encontrada.")
+
+            except oracledb.DatabaseError as e:
+                print("Erro ao buscar a pontuação:", e)
+
+            finally:
+                cursor.close()
+                connection.close()
+
+        elif escolha == '2':
+            print("\nO MyTeacher é uma plataforma inovadora de ensino que conecta alunos e professores no ambiente da medicina,\n oferecendo conteúdos interativos e testes práticos para aprimorar suas habilidades. \nAlém disso, conta com uma assistente virtual (eu!) e um sistema de pontuação para acompanhar seu progresso.\n")
+
+        elif escolha == '3':
+            print("\nO jogo que está em desenvolvimento vai simular procedimentos médicos em realidade virtual, focado especialmente \nem cirurgias laparoscópicas. Ele será uma ferramenta incrível para praticar e aprender em um ambiente seguro e imersivo.\n")
+
+        elif escolha == '4':
+            print("Saindo do chat com a HELENA.")
+            break
+
         else:
-            print("Olá! Eu sou a HELENA, sua assistente virtual. Seja bem vindo ao MyTeacher! Sua nota no teste de Laparoscopia não foi encontrada.")
+            print("Opção inválida. Tente novamente.")
 
-    except oracledb.DatabaseError as e:
-        print("Erro ao buscar a pontuação:", e)
-
-    finally:
-        # Fechar o cursor e a conexão
-        cursor.close()
-        connection.close()
-
-# Função para a tela principal após o login, que exibe os dados do usuário
+# Função para a tela principal após o login
 def tela_principal(dados_usuario):
     turma = []  # Variável local para armazenar a turma
     print("\nBem-vindo ao MyTeacher!")
-    print(f"Valor de autoridade: {dados_usuario['autoridade']}")
+    
+    if dados_usuario['autoridade'] == 1:
+        print("\nOlá professor!")  # Exibir "Bem-vindo, professor" para professores
+    else:
+        print("\nOlá aluno!")  # Exibir "Bem-vindo, aluno" para alunos
     
     while True:
         print("\nOpções:")
@@ -286,10 +358,11 @@ def tela_principal(dados_usuario):
         print("4. Conteúdos de Laparoscopia")
         print("5. Jogo em Realidade Virtual")
         print("6. Área de Saúde Mental")
-        if dados_usuario['autoridade'] == 1:
-            print("7. Montar Turma")  # Exibir essa opção apenas para autoridades
-            print("8. Ver notas da turma")  # Exibir a opção de ver turma para autoridades
-        print("9. Sair")
+        if dados_usuario['autoridade'] == 1: # Exibir as opções abaixo apenas para professores
+            print("7. Montar Turma")  
+            print("8. Ver notas da turma")  
+            print("9. Ver tabela de alunos")
+        print("10. Logout")
         
         escolha = input("Digite a opção desejada: ")
         
@@ -310,7 +383,7 @@ def tela_principal(dados_usuario):
         elif escolha == '4' :
             while True:
                 print("1. Os instrumentos da laparoscopia")
-                print("2. Os procedinmentos da laparoscopia")
+                print("2. Os procedimentos da laparoscopia")
                 print("3. Videos")
                 print("4. Sair")
                 
@@ -332,7 +405,7 @@ def tela_principal(dados_usuario):
                     print("Escolha uma opção válida.")
         
         elif escolha == '5' :
-                print("O jogo ainda está sendo desenvolvido, acesse nossa landing page no seu navegador para saber mais!")
+                print("\nO jogo ainda está sendo desenvolvido, acesse nossa landing page no seu navegador para saber mais!\n")
 
         elif escolha == '6' :
                 while True:
@@ -354,12 +427,15 @@ def tela_principal(dados_usuario):
                 
 
         elif escolha == '7' and dados_usuario['autoridade'] == 1:
-            turma = montar_turma()  # Chamar a função de montar turma
+            turma = montar_turma()  
         
         elif escolha == '8' and dados_usuario['autoridade'] == 1:
-            ver_notas_turma(turma)  # Chamar a função de ver turma com a lista de alunos
+            ver_notas_turma(turma)  
 
-        elif escolha == '9':
+        elif escolha == '9' and dados_usuario['autoridade'] == 1:
+            visualizar_usuarios_nao_autoridade()
+            
+        elif escolha == '10':
             print("Saindo da Tela Principal.")
             break
         
@@ -397,7 +473,7 @@ def verificar_login(email, senha):
                 "apelido": dados_usuario[1],
                 "cpf": dados_usuario[2],
                 "matricula": dados_usuario[3],
-                "autoridade": int(dados_usuario[4])  # Certifique-se de que autoridade seja int
+                "autoridade": int(dados_usuario[4]) 
             }
             print("Login bem-sucedido.")
             tela_principal(dados_usuario_dict)  # Redirecionar para a tela principal com os dados do usuário
@@ -420,7 +496,7 @@ def login_usuario():
     
     verificar_login(email, senha)
 
-# Função principal do programa com loop
+# Função principal do programa com o loop
 def main():
     while True:
         print("\nMenu:")
