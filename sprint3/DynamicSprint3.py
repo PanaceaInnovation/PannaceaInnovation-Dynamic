@@ -1,4 +1,5 @@
 import oracledb
+import random  # Importando para gerar o número aleatório
 
 # Função para inserir um novo usuário na tabela
 def inserir_usuario(email, apelido, senha, cpf, matricula, autoridade):
@@ -13,14 +14,20 @@ def inserir_usuario(email, apelido, senha, cpf, matricula, autoridade):
         # Criar um cursor
         cursor = connection.cursor()
 
+        # Se o usuário não for autoridade, gerar uma pontuação aleatória entre 0 e 10
+        if autoridade == 0:
+            pontuacao = random.randint(0, 10)
+        else:
+            pontuacao = None  # Autoridades não têm pontuação, ou você pode definir outro valor padrão
+
         # Comando SQL para inserir o usuário
         sql_insert = """
-        INSERT INTO cadastrop (email, apelido, senha, cpf, matricula, autoridade)
-        VALUES (:email, :apelido, :senha, :cpf, :matricula, :autoridade)
+        INSERT INTO cadastrop (email, apelido, senha, cpf, matricula, autoridade, pontuacao)
+        VALUES (:email, :apelido, :senha, :cpf, :matricula, :autoridade, :pontuacao)
         """
         
         # Executar o comando de inserção
-        cursor.execute(sql_insert, email=email, apelido=apelido, senha=senha, cpf=cpf, matricula=matricula, autoridade=autoridade)
+        cursor.execute(sql_insert, email=email, apelido=apelido, senha=senha, cpf=cpf, matricula=matricula, autoridade=autoridade, pontuacao=pontuacao)
         
         # Confirmar a transação
         connection.commit()
@@ -47,6 +54,85 @@ def cadastro_usuario():
     autoridade = int(input("Digite se é uma autoridade (Professor) (1 para sim e 0 para não): "))
     
     inserir_usuario(email, apelido, senha, cpf, matricula, autoridade)
+
+   
+
+def editar_dados_usuario(dados_usuario):
+    print("\n=== Editar Dados ===")
+    
+    # Opções para edição
+    while True:
+        print("\nDados atuais:")
+        for key, value in dados_usuario.items():
+            print(f"{key.capitalize()}: {value}")
+        
+        print("\nEscolha o que deseja editar:")
+        print("1. Email")
+        print("2. Apelido")
+        print("3. CPF")
+        print("4. Sair")
+
+        escolha = input("Digite a opção desejada: ")
+
+        if escolha == '1':
+            novo_email = input("Digite o novo email: ")
+            dados_usuario['email'] = novo_email
+            
+        elif escolha == '2':
+            novo_apelido = input("Digite o novo apelido: ")
+            dados_usuario['apelido'] = novo_apelido
+            
+            
+        elif escolha == '3':
+            novo_cpf = input("Digite o novo CPF: ")
+            dados_usuario['cpf'] = novo_cpf
+            
+        elif escolha == '4':
+            break
+            
+        else:
+            print("Opção inválida. Tente novamente.")
+
+        # Após cada edição, perguntar se deseja confirmar as alterações
+        confirmar = input("Deseja confirmar as alterações? (s/n): ")
+        if confirmar.lower() == 's':
+            try:
+                # Conectar ao banco de dados
+                connection = oracledb.connect(
+                    user="rm97857",
+                    password="060105",
+                    dsn="oracle.fiap.com.br:1521/orcl"
+                )
+
+                # Criar um cursor
+                cursor = connection.cursor()
+
+                # Comando SQL para atualizar os dados do usuário
+                sql_update = """
+                UPDATE cadastrop
+                SET email = :email, apelido = :apelido, cpf = :cpf
+                WHERE matricula = :matricula
+                """
+
+                # Executar a atualização
+                cursor.execute(sql_update, email=dados_usuario['email'],
+                               apelido=dados_usuario['apelido'],
+                               cpf=dados_usuario['cpf'],
+                               matricula=dados_usuario['matricula'])
+
+                # Confirmar a transação
+                connection.commit()
+
+                print("Dados atualizados com sucesso.")
+
+            except oracledb.DatabaseError as e:
+                print("Erro ao atualizar os dados:", e)
+
+            finally:
+                # Fechar o cursor e a conexão
+                cursor.close()
+                connection.close()
+
 
 def buscar_aluno_por_matricula(matricula):
     try:
@@ -99,31 +185,111 @@ def montar_turma():
             break
         
         # Buscar o aluno pelo banco de dados
-        nome_aluno = buscar_aluno_por_matricula(matricula_aluno)
+        aluno_info = buscar_aluno_por_matricula(matricula_aluno)
         
-        if nome_aluno:
-            turma.append({"matricula": matricula_aluno, "nome": nome_aluno})
-            print(f"Aluno {nome_aluno} (Matrícula: {matricula_aluno}) adicionado à turma.")
+        if aluno_info:
+            apelido = aluno_info
+            turma.append({"matricula": matricula_aluno, "nome": apelido})
+            print(f"Aluno {apelido} (Matrícula: {matricula_aluno}, adicionado à turma.")
         else:
             print(f"Nenhum aluno encontrado com a matrícula {matricula_aluno}.")
     
     print("\nTurma montada com sucesso!")
-    print("Lista de alunos na turma:")
-    for aluno in turma:
-        print(f"Nome: {aluno['nome']}, Matrícula: {aluno['matricula']}")
+    return turma  # Retornar a lista de alunos da turma
+
+def ver_notas_turma(turma):
+    if not turma:
+        print("\nA turma está vazia. Nenhum aluno foi adicionado.")
+        return
+    
+    print("\n=== Notas da Turma ===")
+    
+    try:
+        # Conectar ao banco de dados
+        connection = oracledb.connect(
+            user="rm97857",
+            password="060105",
+            dsn="oracle.fiap.com.br:1521/orcl"
+        )
+        
+        # Criar um cursor
+        cursor = connection.cursor()
+        
+        # Percorrer a lista de alunos na turma para buscar as notas
+        for aluno in turma:
+            matricula = aluno['matricula']
+            
+            # Comando SQL para buscar a pontuação (nota) do aluno pela matrícula
+            sql_select = """
+            SELECT pontuacao FROM cadastrop WHERE matricula = :matricula
+            """
+            
+            # Executar a busca
+            cursor.execute(sql_select, matricula=matricula)
+            pontuacao = cursor.fetchone()
+            
+            if pontuacao:
+                print(f"Nome: {aluno['nome']}, Matrícula: {matricula}, Nota: {pontuacao[0]}")
+            else:
+                print(f"Nome: {aluno['nome']}, Matrícula: {matricula}, Nota: Não encontrada.")
+    
+    except oracledb.DatabaseError as e:
+        print("Erro ao buscar notas dos alunos:", e)
+
+def helena(dados_usuario):
+    try:
+        # Conectar ao banco de dados
+        connection = oracledb.connect(
+            user="rm97857",
+            password="060105",
+            dsn="oracle.fiap.com.br:1521/orcl"
+        )
+
+        # Criar um cursor
+        cursor = connection.cursor()
+
+        # Comando SQL para buscar a pontuação do aluno pela matrícula
+        sql_select = """
+        SELECT pontuacao FROM cadastrop WHERE matricula = :matricula
+        """
+        
+        # Executar o comando de seleção
+        cursor.execute(sql_select, matricula=dados_usuario['matricula'])
+        
+        # Obter o resultado
+        pontuacao = cursor.fetchone
+        
+        if pontuacao:
+            print(f"Olá! Eu sou a HELENA, sua assistente virtual. Seja bem vindo ao MyTeacher! Sua nota no teste de Laparoscopia é de {pontuacao[0]}. Como posso ajuda-lo hoje?")
+        else:
+            print("Olá! Eu sou a HELENA, sua assistente virtual. Seja bem vindo ao MyTeacher! Sua nota no teste de Laparoscopia não foi encontrada.")
+
+    except oracledb.DatabaseError as e:
+        print("Erro ao buscar a pontuação:", e)
+
+    finally:
+        # Fechar o cursor e a conexão
+        cursor.close()
+        connection.close()
 
 # Função para a tela principal após o login, que exibe os dados do usuário
 def tela_principal(dados_usuario):
-    print("\nBem-vindo à Tela Principal!")
-    print(f"Valor de autoridade: {dados_usuario['autoridade']}")  # Linha de depuração
+    turma = []  # Variável local para armazenar a turma
+    print("\nBem-vindo ao MyTeacher!")
+    print(f"Valor de autoridade: {dados_usuario['autoridade']}")
     
     while True:
         print("\nOpções:")
         print("1. Ver Perfil")
         print("2. Editar Dados")
+        print("3. Conversar com a Helena")
+        print("4. Conteúdos de Laparoscopia")
+        print("5. Jogo em Realidade Virtual")
+        print("6. Área de Saúde Mental")
         if dados_usuario['autoridade'] == 1:
-            print("3. Montar Turma")  # Exibir essa opção apenas para autoridades
-        print("4. Sair")
+            print("7. Montar Turma")  # Exibir essa opção apenas para autoridades
+            print("8. Ver notas da turma")  # Exibir a opção de ver turma para autoridades
+        print("9. Sair")
         
         escolha = input("Digite a opção desejada: ")
         
@@ -136,18 +302,69 @@ def tela_principal(dados_usuario):
             print(f"Autoridade: {'Sim' if dados_usuario['autoridade'] == 1 else 'Não'}")
         
         elif escolha == '2':
-            print("Tela de edição de dados... (não implementada)")
+            editar_dados_usuario(dados_usuario)
         
-        elif escolha == '3' and dados_usuario['autoridade'] == 1:
-            montar_turma()  # Chamar a função de montar turma
+        elif escolha == '3' :
+            helena(dados_usuario)
+
+        elif escolha == '4' :
+            while True:
+                print("1. Os instrumentos da laparoscopia")
+                print("2. Os procedinmentos da laparoscopia")
+                print("3. Videos")
+                print("4. Sair")
+                
+                escolha_conteudo = input("Escolha uma das opções: ")
+
+                if escolha_conteudo == '1':
+                    print("Os principais instrumentos usados na laparoscopia são...\n\n")
+
+                elif escolha_conteudo == '2':
+                    print("Os principais procedimentos feitos na laparoscopia são...\n\n")
+
+                elif escolha_conteudo == '3': 
+                    print("aperte o play para iniciar o vídeo desejado:\n\n2")
+
+                elif escolha_conteudo == '4': 
+                    break
+
+                else:
+                    print("Escolha uma opção válida.")
         
-        elif escolha == '4':
+        elif escolha == '5' :
+                print("O jogo ainda está sendo desenvolvido, acesse nossa landing page no seu navegador para saber mais!")
+
+        elif escolha == '6' :
+                while True:
+                    print("1. Mostrar psicólogos por perto")
+                    print("2. Por que é importante médicos com a saúde mental em dia?")
+                    print("3. Sair")
+
+                    escolha_mental = input("Escolha uma das opções: ")
+
+                    if escolha_mental == '1':
+                        print("Psicólogos por perto: \n\n Marcos, atende presencialmente, atualmente a 3 km de sua localização \n\n Ana, atende de forma remota \n\n Caio, atende de forma remota \n")
+                    
+                    elif escolha_mental == '2':
+
+                        print("A saúde mental no universo da medicina, é importante porque...")
+
+                    elif escolha_mental == '3':
+                        break
+                
+
+        elif escolha == '7' and dados_usuario['autoridade'] == 1:
+            turma = montar_turma()  # Chamar a função de montar turma
+        
+        elif escolha == '8' and dados_usuario['autoridade'] == 1:
+            ver_notas_turma(turma)  # Chamar a função de ver turma com a lista de alunos
+
+        elif escolha == '9':
             print("Saindo da Tela Principal.")
             break
         
         else:
             print("Opção inválida ou você não tem permissão para acessar esta opção. Tente novamente.")
-
 # Função para verificar o login do usuário e retornar os dados dele
 def verificar_login(email, senha):
     try:
@@ -225,5 +442,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
